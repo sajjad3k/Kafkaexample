@@ -9,11 +9,14 @@ import (
 
 	"github.com/piquette/finance-go/quote"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/plain"
 )
 
 const (
 	topic         = "stocks"
 	brokerAddress = "localhost:9092"
+	username      = "producer"
+	password      = "producer@1"
 )
 
 func getdata(sym string) Stock {
@@ -33,9 +36,23 @@ func getdata(sym string) Stock {
 
 func Produce(ctx context.Context, lst []string, wg *sync.WaitGroup) {
 
+	
+	mech := plain.Mechanism{
+		Username: username,
+		Password: password,
+	}
+
+	dial := kafka.Dialer{
+		Timeout:       10 * time.Second,
+		DualStack:     true,
+		SASLMechanism: mech,
+	}
+	
+	
 	write := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: []string{brokerAddress},
 		Topic:   topic,
+		Dialer:  &dial,
 	})
 
 	for _, val := range lst {
